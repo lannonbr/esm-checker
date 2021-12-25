@@ -1,11 +1,10 @@
-use std::{fs, path::Path};
-
 use serde_json::Value;
+use std::{fs, path::Path};
 
 fn main() {
     let mut files: Vec<String> = vec![];
 
-    visit_dirs("package.json", Path::new("node/node_modules"), &mut files);
+    collect_files("package.json", Path::new("node/node_modules"), &mut files);
 
     let mut type_module_count = 0;
     let mut module_count = 0;
@@ -13,18 +12,20 @@ fn main() {
     let mut esm_only = 0;
 
     for file in files.iter() {
-        let file = fs::read_to_string(file).unwrap();
-        let package_json: Value = serde_json::from_str(&file).unwrap();
-        if package_json.get("type").is_some() {
-            if package_json.get("type").unwrap().as_str().unwrap() == "module" {
+        let package_json_str = fs::read_to_string(file).unwrap();
+        let package_json: Value = serde_json::from_str(&package_json_str).unwrap();
+
+        if let Some(package_type) = package_json.get("type") {
+            if package_type.as_str().unwrap() == "module" {
                 type_module_count += 1;
             }
         }
-        if package_json.get("module").is_some() && package_json.get("name").is_some() {
+        if package_json.get("module").is_some() {
             module_count += 1;
         }
-        if package_json.get("exports").is_some() {
-            let exports_str = package_json.get("exports").unwrap().to_string();
+        if let Some(exports) = package_json.get("exports") {
+            let exports_str = exports.to_string();
+
             if exports_str.contains("require") {
                 require_count += 1;
             } else {
@@ -45,13 +46,13 @@ fn main() {
     );
 }
 
-fn visit_dirs(filename: &str, dir: &Path, files: &mut Vec<String>) {
+fn collect_files(filename: &str, dir: &Path, files: &mut Vec<String>) {
     if dir.is_dir() {
         for entry in fs::read_dir(dir).unwrap() {
             let e = entry.unwrap();
             let path = e.path();
             if path.is_dir() {
-                visit_dirs(filename, &path, files);
+                collect_files(filename, &path, files);
             } else {
                 if path.ends_with("package.json") {
                     let path_str = path.as_path().to_str().unwrap().to_string();
