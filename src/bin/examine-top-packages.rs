@@ -1,5 +1,5 @@
 use serde_json::Value;
-use std::{fs, path::Path};
+use std::{fs, path::Path, process::exit};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -30,6 +30,11 @@ impl Package {
 
 fn main() {
     let args = Opt::from_args();
+
+    if !args.tsv && !args.stats {
+        println!("Please add one of the following flags `--tsv` or `--stats`, view `--help` for more information.");
+        exit(1);
+    }
 
     let mut files: Vec<String> = vec![];
 
