@@ -1,7 +1,7 @@
 name: Save ESM Stats Daily
 on:
-  push:
-    branches: [main]
+  schedule:
+    - cron: "0 0 * * *"
 permissions:
   id-token: write
   contents: write
