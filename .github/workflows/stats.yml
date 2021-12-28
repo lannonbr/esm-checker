@@ -1,0 +1,22 @@
+name: Save ESM Stats Daily
+on:
+  push:
+    branches: [main]
+permissions:
+  id-token: write
+  contents: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: ESMDynamoSession
+          role-duration-seconds: 900
+      - run: cargo run --bin examine-top-packages --release -- --stats
+        env:
+          DYNAMO_STATS_TABLE_NAME: ${{ secrets.DYNAMO_STATS_TABLE_NAME }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
