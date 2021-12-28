@@ -13,6 +13,10 @@ struct Opt {
     /// Output stats on the packages
     #[structopt(long)]
     stats: bool,
+
+    /// Use this flag to reduce the requests to the first 100
+    #[structopt(long)]
+    short: bool,
 }
 
 #[derive(Debug, Default)]
@@ -29,18 +33,22 @@ impl Package {
     }
 }
 
-async fn generate_packages() -> Result<Vec<Package>, Box<dyn std::error::Error>> {
+async fn generate_packages(short: bool) -> Result<Vec<Package>, Box<dyn std::error::Error>> {
     let client = reqwest::Client::builder()
         .user_agent("esm-checker/0.1.0 (+https://github.com/lannonbr/esm-checker)")
         .build()
         .unwrap();
 
-    let initial_package_list: Vec<String> = fs::read_to_string("packages.txt")
+    let mut initial_package_list: Vec<String> = fs::read_to_string("packages.txt")
         .unwrap()
         .split_whitespace()
         .into_iter()
         .map(|c| c.to_owned())
         .collect();
+
+    if short {
+        initial_package_list.truncate(100);
+    }
 
     let mut requests = FuturesUnordered::new();
 
@@ -87,9 +95,9 @@ async fn generate_packages() -> Result<Vec<Package>, Box<dyn std::error::Error>>
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut packages = generate_packages().await?;
-
     let args = Opt::from_args();
+
+    let mut packages = generate_packages(args.short).await?;
 
     if !args.tsv && !args.stats {
         println!("Please add one of the following flags `--tsv` or `--stats`, view `--help` for more information.");
