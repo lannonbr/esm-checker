@@ -1,0 +1,19 @@
+{
+  "name": "cdk",
+  "version": "0.1.0",
+  "bin": {
+    "cdk": "bin/cdk.js"
+  },
+  "scripts": {
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "@aws-cdk/assertions": "1.137.0",
+    "aws-cdk": "1.137.0"
+  },
+  "dependencies": {
+    "@aws-cdk/aws-dynamodb": "^1.137.0",
+    "@aws-cdk/core": "1.137.0",
+    "aws-cdk-github-oidc": "^0.0.21"
+  }
+}
