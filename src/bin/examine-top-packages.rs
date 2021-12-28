@@ -20,6 +20,10 @@ struct Opt {
     /// Use this flag to reduce the requests to the first 100
     #[structopt(long)]
     short: bool,
+
+    /// Publish stats to dynamo
+    #[structopt(long)]
+    dynamo: bool,
 }
 
 #[derive(Debug, Default)]
@@ -94,14 +98,6 @@ async fn generate_packages(short: bool) -> Result<Vec<Package>, Box<dyn std::err
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let table_name = std::env::var("DYNAMO_STATS_TABLE_NAME")
-        .expect("There should be a table name defined as an environment variable");
-    let aws_region = std::env::var("AWS_REGION").ok().map(Region::new).unwrap();
-
-    let config = aws_config::from_env().region(aws_region).load().await;
-
-    let dynamo_client = aws_sdk_dynamodb::Client::new(&config);
-
     let args = Opt::from_args();
 
     let mut packages = generate_packages(args.short).await?;
@@ -160,28 +156,37 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             esm_only
         );
 
-        let request = dynamo_client
-            .put_item()
-            .table_name(table_name)
-            .item("timestamp", AttributeValue::N(unix_timestamp.to_string()))
-            .item(
-                "total_packages",
-                AttributeValue::N(total_packages.to_string()),
-            )
-            .item(
-                "type_module",
-                AttributeValue::N(type_module_count.to_string()),
-            )
-            .item(
-                "exports_require",
-                AttributeValue::N(require_count.to_string()),
-            )
-            .item(
-                "exports_no_require",
-                AttributeValue::N(esm_only.to_string()),
-            );
+        if args.dynamo {
+            let table_name = std::env::var("DYNAMO_STATS_TABLE_NAME")
+                .expect("There should be a table name defined as an environment variable");
+            let aws_region = std::env::var("AWS_REGION").ok().map(Region::new).unwrap();
 
-        request.send().await?;
+            let config = aws_config::from_env().region(aws_region).load().await;
+
+            let dynamo_client = aws_sdk_dynamodb::Client::new(&config);
+            let request = dynamo_client
+                .put_item()
+                .table_name(table_name)
+                .item("timestamp", AttributeValue::N(unix_timestamp.to_string()))
+                .item(
+                    "total_packages",
+                    AttributeValue::N(total_packages.to_string()),
+                )
+                .item(
+                    "type_module",
+                    AttributeValue::N(type_module_count.to_string()),
+                )
+                .item(
+                    "exports_require",
+                    AttributeValue::N(require_count.to_string()),
+                )
+                .item(
+                    "exports_no_require",
+                    AttributeValue::N(esm_only.to_string()),
+                );
+
+            request.send().await?;
+        }
     }
 
     Ok(())
