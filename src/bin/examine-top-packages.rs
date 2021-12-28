@@ -1,5 +1,6 @@
+use futures::{stream::FuturesUnordered, StreamExt};
 use serde_json::Value;
-use std::{fs, path::Path, process::exit};
+use std::{fs, process::exit};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -28,7 +29,13 @@ impl Package {
     }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = reqwest::Client::builder()
+        .user_agent("esm-checker/0.1.0 (+https://github.com/lannonbr/esm-checker)")
+        .build()
+        .unwrap();
+
     let args = Opt::from_args();
 
     if !args.tsv && !args.stats {
@@ -36,23 +43,36 @@ fn main() {
         exit(1);
     }
 
-    let mut files: Vec<String> = vec![];
+    let initial_package_list: Vec<String> = fs::read_to_string("top-packages.txt")
+        .unwrap()
+        .split_whitespace()
+        .into_iter()
+        .map(|c| c.to_owned())
+        .collect();
 
-    collect_files("package.json", Path::new("node/node_modules"), &mut files);
+    let mut requests = FuturesUnordered::new();
 
-    let mut pkgs: Vec<Package> = Vec::new();
+    for package in initial_package_list {
+        let client = client.clone();
+        requests.push(tokio::spawn(async move {
+            let url = format!("https://unpkg.com/{}@latest/package.json", package);
+            client.get(url).send().await.unwrap().text().await.unwrap()
+        }));
+    }
 
-    for file in files.iter() {
-        let package_json_str = fs::read_to_string(file).unwrap();
-        let package_json: Value = serde_json::from_str(&package_json_str).unwrap();
+    let mut pkgs: Vec<Package> = vec![];
+
+    while let Some(unpkg_resp) = requests.next().await {
+        let package_json_str = unpkg_resp.unwrap();
+        let package_json: Value = match serde_json::from_str(&package_json_str) {
+            Ok(e) => e,
+            Err(_) => {
+                continue;
+            }
+        };
         let name_opt = package_json.get("name");
 
         let mut new_package = Package::default();
-
-        // Skip the current package if it doesn't have a "name" field (assume it is a sub-module)
-        if name_opt.is_none() {
-            continue;
-        }
 
         let name = name_opt.unwrap().as_str().unwrap();
         new_package.name = name.to_string();
@@ -116,21 +136,6 @@ fn main() {
             esm_only
         );
     }
-}
 
-fn collect_files(filename: &str, dir: &Path, files: &mut Vec<String>) {
-    if dir.is_dir() {
-        for entry in fs::read_dir(dir).unwrap() {
-            let e = entry.unwrap();
-            let path = e.path();
-            if path.is_dir() {
-                collect_files(filename, &path, files);
-            } else {
-                if path.ends_with("package.json") {
-                    let path_str = path.as_path().to_str().unwrap().to_string();
-                    files.push(path_str);
-                }
-            }
-        }
-    }
+    Ok(())
 }
