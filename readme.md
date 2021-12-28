@@ -13,6 +13,7 @@ If you want to test this locally you'll need the following:
 - `registry.txt`: a comma separated list of all packages on npm as of a snapshot of the entire public npm registry as of December 23, 2021.
 - `packages.txt`: a collection of the top 250 most depended on packages as based on this Gist: [01.most-dependent-on.md](https://gist.github.com/anvaka/8e8fa57c7ee1350e3491#file-01-most-dependent-upon-md) and all of their dependencies (which equates to around 2,000 packages right now).
 - `src/`: the source for the rust tooling to examine the node packages.
+- `cdk/`: The source for the AWS CDK Stack for provisioning AWS resources to store historical data for this project
 
 ## Running
 
