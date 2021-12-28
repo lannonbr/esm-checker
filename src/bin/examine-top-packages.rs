@@ -29,21 +29,13 @@ impl Package {
     }
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn generate_packages() -> Result<Vec<Package>, Box<dyn std::error::Error>> {
     let client = reqwest::Client::builder()
         .user_agent("esm-checker/0.1.0 (+https://github.com/lannonbr/esm-checker)")
         .build()
         .unwrap();
 
-    let args = Opt::from_args();
-
-    if !args.tsv && !args.stats {
-        println!("Please add one of the following flags `--tsv` or `--stats`, view `--help` for more information.");
-        exit(1);
-    }
-
-    let initial_package_list: Vec<String> = fs::read_to_string("top-packages.txt")
+    let initial_package_list: Vec<String> = fs::read_to_string("packages.txt")
         .unwrap()
         .split_whitespace()
         .into_iter()
@@ -90,22 +82,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         pkgs.push(new_package);
     }
 
-    pkgs = pkgs.into_iter().filter(|p| p.has_values()).collect();
+    Ok(pkgs)
+}
 
-    let type_module_count = pkgs
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut packages = generate_packages().await?;
+
+    let args = Opt::from_args();
+
+    if !args.tsv && !args.stats {
+        println!("Please add one of the following flags `--tsv` or `--stats`, view `--help` for more information.");
+        exit(1);
+    }
+
+    packages = packages.into_iter().filter(|p| p.has_values()).collect();
+
+    let type_module_count = packages
         .iter()
         .filter(|&p| p.package_type == Some(String::from("module")))
         .count();
 
-    let module_count = pkgs.iter().filter(|&p| p.module.is_some()).count();
+    let module_count = packages.iter().filter(|&p| p.module.is_some()).count();
 
-    let require_count = pkgs
+    let require_count = packages
         .iter()
         .filter(|&p| p.exports.is_some())
         .filter(|&p| p.exports.as_ref().unwrap().contains("require"))
         .count();
 
-    let esm_only = pkgs
+    let esm_only = packages
         .iter()
         .filter(|&p| p.exports.is_some())
         .filter(|&p| !p.exports.as_ref().unwrap().contains("require"))
@@ -113,7 +119,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if args.tsv {
         println!("name\tpackage_type\tmodule\texports");
-        for pkg in pkgs {
+        for pkg in packages {
             println!(
                 "{}\t{:?}\t{:?}\t{:?}",
                 pkg.name,
