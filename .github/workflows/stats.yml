@@ -1,5 +1,6 @@
 name: Save ESM Stats Daily
 on:
+  workflow_dispatch:
   schedule:
     - cron: "0 0 * * *"
 permissions:
