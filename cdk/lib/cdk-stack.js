@@ -37,7 +37,15 @@ class CdkStack extends cdk.Stack {
       filter: "ref:refs/heads/main",
     });
 
+    const siteReadRole = new GithubActionsRole(this, "ESMCheckerSiteReadRole", {
+      provider,
+      owner: "lannonbr",
+      repo: "esm-checker-site",
+      filter: "ref:refs/heads/main",
+    });
+
     statsTable.grantReadWriteData(dynamoRole);
+    statsTable.grantReadData(siteReadRole);
 
     const tableName = new CfnOutput(this, "ESMCheckerDynamoStatsTableName", {
       value: statsTable.tableName,
