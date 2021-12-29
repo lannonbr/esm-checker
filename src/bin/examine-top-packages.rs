@@ -72,7 +72,9 @@ async fn generate_packages(short: bool) -> Result<Vec<Package>, Box<dyn std::err
         let package_json_str = unpkg_resp.unwrap();
         let package_json: Value = match serde_json::from_str(&package_json_str) {
             Ok(e) => e,
-            Err(_) => {
+            Err(e) => {
+                eprintln!("{}", e);
+                println!("Str: {}", package_json_str);
                 continue;
             }
         };
