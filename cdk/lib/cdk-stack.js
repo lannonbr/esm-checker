@@ -30,6 +30,8 @@ class CdkStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
+    cdk.Tags.of(statsTable).add("project", "esm-checker");
+
     const dynamoRole = new GithubActionsRole(this, "ESMCheckerDynamoRole", {
       provider,
       owner: "lannonbr",
@@ -37,12 +39,16 @@ class CdkStack extends cdk.Stack {
       filter: "ref:refs/heads/main",
     });
 
+    cdk.Tags.of(dynamoRole).add("project", "esm-checker");
+
     const siteReadRole = new GithubActionsRole(this, "ESMCheckerSiteReadRole", {
       provider,
       owner: "lannonbr",
       repo: "esm-checker-site",
       filter: "ref:refs/heads/main",
     });
+
+    cdk.Tags.of(siteReadRole).add("project", "esm-checker");
 
     statsTable.grantReadWriteData(dynamoRole);
     statsTable.grantReadData(siteReadRole);

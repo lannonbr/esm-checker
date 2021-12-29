@@ -20,3 +20,7 @@ If you want to test this locally you'll need the following:
 You can run any of the binaries using the `--bin` flag on `cargo run` and then list the name of the file you want to run.
 
 Ex: `cargo run --bin aggregate-package-prefixes`
+
+## Website
+
+If you would like to see the data collected from this project visualized, visit https://esm-checker.netlify.app.
