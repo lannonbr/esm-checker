@@ -1,0 +1,16 @@
+on:
+  push:
+    tags:
+      - "v*.*.*"
+name: Publish released binarys on Git tag
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: cargo build --release
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            target/release/examine-top-packages
+            target/release/aggregate-package-prefixes
