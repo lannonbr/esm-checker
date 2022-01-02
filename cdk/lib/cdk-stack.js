@@ -24,13 +24,59 @@ class CdkStack extends cdk.Stack {
     const statsTable = new dynamo.Table(this, "ESMCheckerDynamoStatsTable", {
       billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
       partitionKey: {
+        name: "year_month",
+        type: dynamo.AttributeType.STRING,
+      },
+      sortKey: {
         name: "timestamp",
-        type: dynamo.AttributeType.NUMBER,
+        type: dynamo.AttributeType.STRING,
       },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    cdk.Tags.of(statsTable).add("project", "esm-checker");
+    cdk.Tags.of(statsTable).add("Project", "esm-checker");
+
+    const packageTable = new dynamo.Table(
+      this,
+      "ESMCheckerDynamoPackageTable",
+      {
+        billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
+        partitionKey: {
+          name: "package_name",
+          type: dynamo.AttributeType.STRING,
+        },
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      }
+    );
+
+    cdk.Tags.of(packageTable).add("Project", "esm-checker");
+
+    const auditTable = new dynamo.Table(this, "ESMCheckerDynamoAuditTable", {
+      billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
+      partitionKey: {
+        name: "timestamp",
+        type: dynamo.AttributeType.STRING,
+      },
+      sortKey: {
+        name: "package_name",
+        type: dynamo.AttributeType.STRING,
+      },
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    cdk.Tags.of(auditTable).add("Project", "esm-checker");
+
+    auditTable.addGlobalSecondaryIndex({
+      indexName: "packageIndex",
+      partitionKey: {
+        name: "package_name",
+        type: dynamo.AttributeType.STRING,
+      },
+      sortKey: {
+        name: "timestamp",
+        type: dynamo.AttributeType.STRING,
+      },
+    });
 
     const dynamoRole = new GithubActionsRole(this, "ESMCheckerDynamoRole", {
       provider,
@@ -39,7 +85,7 @@ class CdkStack extends cdk.Stack {
       filter: "ref:refs/heads/main",
     });
 
-    cdk.Tags.of(dynamoRole).add("project", "esm-checker");
+    cdk.Tags.of(dynamoRole).add("Project", "esm-checker");
 
     const siteReadRole = new GithubActionsRole(this, "ESMCheckerSiteReadRole", {
       provider,
@@ -48,10 +94,14 @@ class CdkStack extends cdk.Stack {
       filter: "ref:refs/heads/main",
     });
 
-    cdk.Tags.of(siteReadRole).add("project", "esm-checker");
+    cdk.Tags.of(siteReadRole).add("Project", "esm-checker");
 
     statsTable.grantReadWriteData(dynamoRole);
+    packageTable.grantReadWriteData(dynamoRole);
+    auditTable.grantReadWriteData(dynamoRole);
+
     statsTable.grantReadData(siteReadRole);
+    auditTable.grantReadData(siteReadRole);
 
     const tableName = new CfnOutput(this, "ESMCheckerDynamoStatsTableName", {
       value: statsTable.tableName,

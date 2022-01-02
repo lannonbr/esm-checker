@@ -1,18 +1,38 @@
 use futures::{stream::FuturesUnordered, StreamExt};
 use serde_json::Value;
-use std::fs;
+use std::{collections::HashMap, fs};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Package {
     pub name: String,
-    pub exports: Option<String>,
-    pub package_type: Option<String>,
+    pub exports_require: bool,
+    pub exports_no_require: bool,
+    pub type_module: bool,
 }
 
 impl Package {
     pub fn has_values(&self) -> bool {
-        self.exports.is_some() || self.package_type.is_some()
+        self.exports_no_require || self.exports_require || self.type_module
     }
+}
+
+impl From<HashMap<String, aws_sdk_dynamodb::model::AttributeValue>> for Package {
+    fn from(hash: HashMap<String, aws_sdk_dynamodb::model::AttributeValue>) -> Self {
+        Package {
+            name: hash["package_name"].as_s().unwrap().to_owned(),
+            exports_require: hash["exports_require"].as_bool().unwrap().to_owned(),
+            exports_no_require: hash["exports_no_require"].as_bool().unwrap().to_owned(),
+            type_module: hash["type_module"].as_bool().unwrap().to_owned(),
+        }
+    }
+}
+
+pub struct AuditEntry {
+    pub package_name: String,
+    pub timestamp: String,
+    pub change: String,
+    pub old_value: bool,
+    pub new_value: bool,
 }
 
 pub async fn generate_packages(short: bool) -> Result<Vec<Package>, Box<dyn std::error::Error>> {
@@ -84,10 +104,26 @@ fn generate_pkg(json_str: String) -> Option<Package> {
     new_package.name = name.to_string();
 
     if let Some(package_type) = package_json.get("type") {
-        new_package.package_type = Some(package_type.as_str().unwrap().to_string());
+        if package_type.as_str().unwrap() == "module" {
+            new_package.type_module = true;
+        } else {
+            new_package.type_module = false;
+        }
+    } else {
+        new_package.type_module = false;
     }
     if let Some(exports) = package_json.get("exports") {
-        new_package.exports = Some(exports.to_string());
+        let exports_str = exports.to_string();
+        if exports_str.contains("require") {
+            new_package.exports_require = true;
+            new_package.exports_no_require = false;
+        } else {
+            new_package.exports_no_require = true;
+            new_package.exports_require = false;
+        }
+    } else {
+        new_package.exports_no_require = false;
+        new_package.exports_require = false;
     }
 
     Some(new_package)
