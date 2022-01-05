@@ -2,6 +2,10 @@
 
 Updates for all releases of the various tools
 
+# 0.2.1 - Jan 04, 2022
+
+- Add uuid to audit entry sort keys
+
 # 0.2.0 - Jan 02, 2022
 
 - Updated to include auditing capabilities to see when a given module turned on ESM in some way.

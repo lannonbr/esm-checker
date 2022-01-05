@@ -401,7 +401,7 @@ dependencies = [
 
 [[package]]
 name = "esm-checker"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "aws-config",
  "aws-sdk-dynamodb",
