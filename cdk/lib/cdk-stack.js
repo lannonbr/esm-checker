@@ -58,7 +58,7 @@ class CdkStack extends cdk.Stack {
         type: dynamo.AttributeType.STRING,
       },
       sortKey: {
-        name: "package_name",
+        name: "package_name_id",
         type: dynamo.AttributeType.STRING,
       },
       removalPolicy: cdk.RemovalPolicy.DESTROY,

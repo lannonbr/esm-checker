@@ -214,10 +214,20 @@ async fn put_audit(
     audit_table_name: &String,
     audit: AuditEntry,
 ) {
+    let uuid = uuid::Uuid::new_v4();
+
     let r = dynamo_client
         .put_item()
         .table_name(audit_table_name.clone())
         .item("timestamp", AttributeValue::S(audit.timestamp))
+        .item(
+            "package_name_id",
+            AttributeValue::S(format!(
+                "{}{}",
+                audit.package_name.clone(),
+                &uuid.to_simple().to_string()
+            )),
+        )
         .item("package_name", AttributeValue::S(audit.package_name))
         .item("change", AttributeValue::S(audit.change))
         .item("old_value", AttributeValue::Bool(audit.old_value))
