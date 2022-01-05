@@ -17,7 +17,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: ESMDynamoSession
           role-duration-seconds: 900
-      - run: wget https://github.com/lannonbr/esm-checker/releases/download/v0.2.0/examine-top-packages
+      - run: wget https://github.com/lannonbr/esm-checker/releases/download/v0.2.1/examine-top-packages
       - run: chmod +x examine-top-packages
       - run: ./examine-top-packages --dynamo
         env:
