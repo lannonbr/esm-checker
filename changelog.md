@@ -2,6 +2,11 @@
 
 Updates for all releases of the various tools
 
+# 0.2.2 - Jan 15, 2022
+
+- Updated dependencies
+  - migrated StructOpt to Clap
+
 # 0.2.1 - Jan 04, 2022
 
 - Add uuid to audit entry sort keys

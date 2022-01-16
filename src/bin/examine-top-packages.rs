@@ -1,9 +1,9 @@
 use aws_sdk_dynamodb::model::AttributeValue;
 use aws_types::region::Region;
 use chrono::Utc;
+use clap::StructOpt;
 use esm_checker::{generate_packages, AuditEntry, Package};
 use std::collections::HashMap;
-use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "examine-top-packages")]
@@ -19,7 +19,7 @@ struct Opt {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args = Opt::from_args();
+    let args = Opt::parse();
 
     let mut packages = generate_packages(args.short).await?;
     let all_packages = packages.clone();
