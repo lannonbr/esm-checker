@@ -1,6 +1,46 @@
 use futures::{stream::FuturesUnordered, StreamExt};
 use serde_json::Value;
-use std::{collections::HashMap, fs};
+use std::{collections::HashMap, fs, ops::Sub};
+
+#[derive(Debug)]
+pub struct StatsEntry {
+    pub type_module: isize,
+    pub exports_require: isize,
+    pub exports_no_require: isize,
+    pub timestamp: String,
+}
+
+impl From<HashMap<String, aws_sdk_dynamodb::model::AttributeValue>> for StatsEntry {
+    fn from(map: HashMap<String, aws_sdk_dynamodb::model::AttributeValue>) -> Self {
+        StatsEntry {
+            type_module: map["type_module"].as_n().unwrap().parse::<isize>().unwrap(),
+            exports_require: map["exports_require"]
+                .as_n()
+                .unwrap()
+                .parse::<isize>()
+                .unwrap(),
+            exports_no_require: map["exports_no_require"]
+                .as_n()
+                .unwrap()
+                .parse::<isize>()
+                .unwrap(),
+            timestamp: map["timestamp"].as_s().unwrap().to_string(),
+        }
+    }
+}
+
+impl Sub for StatsEntry {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self {
+            type_module: self.type_module - rhs.type_module,
+            exports_require: self.exports_require - rhs.exports_require,
+            exports_no_require: self.exports_no_require - rhs.exports_no_require,
+            timestamp: self.timestamp,
+        }
+    }
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct Package {
@@ -37,7 +77,7 @@ pub struct AuditEntry {
 
 pub async fn generate_packages(short: bool) -> Result<Vec<Package>, Box<dyn std::error::Error>> {
     let client = reqwest::Client::builder()
-        .user_agent("esm-checker/0.1.0 (+https://github.com/lannonbr/esm-checker)")
+        .user_agent("esm-checker/0.3.0 (+https://github.com/lannonbr/esm-checker)")
         .build()
         .unwrap();
 

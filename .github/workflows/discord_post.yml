@@ -1,0 +1,26 @@
+name: Publish stats diff to private discord channel weekly
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * MON"
+permissions:
+  id-token: write
+  contents: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: ESMDynamoSession
+          role-duration-seconds: 900
+      - run: wget https://github.com/lannonbr/esm-checker/releases/download/v0.3.0/msg-weekly-stats
+      - run: chmod +x msg-weekly-stats
+      - run: ./msg-weekly-stats
+        env:
+          DYNAMO_STATS_TABLE_NAME: ${{ secrets.DYNAMO_STATS_TABLE_NAME }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}

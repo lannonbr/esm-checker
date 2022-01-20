@@ -2,6 +2,10 @@
 
 Updates for all releases of the various tools
 
+## 0.3.0 - Jan 19, 2022
+
+- Added discord webhook script to message a given week's stats update.
+
 ## 0.2.2 - Jan 15, 2022
 
 - Updated dependencies
