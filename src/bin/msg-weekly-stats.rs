@@ -51,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let body = serde_json::json!({ "content": format!("{}", diff_str) }).to_string();
 
     let reqwest_client = reqwest::Client::builder()
-        .user_agent("esm-checker-discord-webhook/0.3.0")
+        .user_agent("esm-checker-discord-webhook/0.3.1")
         .build()
         .unwrap();
 

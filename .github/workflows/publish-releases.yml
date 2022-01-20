@@ -14,3 +14,4 @@ jobs:
           files: |
             target/release/examine-top-packages
             target/release/aggregate-package-prefixes
+            target/release/msg-weekly-stats

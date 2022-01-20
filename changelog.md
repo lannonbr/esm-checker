@@ -2,6 +2,10 @@
 
 Updates for all releases of the various tools
 
+## 0.3.1 - Jan 19, 2022
+
+- Add msg-weekly-stats to release artifact
+
 ## 0.3.0 - Jan 19, 2022
 
 - Added discord webhook script to message a given week's stats update.

@@ -17,7 +17,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: ESMDynamoSession
           role-duration-seconds: 900
-      - run: wget https://github.com/lannonbr/esm-checker/releases/download/v0.3.0/msg-weekly-stats
+      - run: wget https://github.com/lannonbr/esm-checker/releases/download/v0.3.1/msg-weekly-stats
       - run: chmod +x msg-weekly-stats
       - run: ./msg-weekly-stats
         env:
