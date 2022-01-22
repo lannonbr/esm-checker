@@ -2,7 +2,7 @@ name: Publish stats diff to private discord channel weekly
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * MON"
+    - cron: "30 0 * * MON"
 permissions:
   id-token: write
   contents: write
