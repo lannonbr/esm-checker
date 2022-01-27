@@ -428,6 +428,7 @@ dependencies = [
  "dotenv",
  "futures",
  "reqwest",
+ "semver",
  "serde_json",
  "tokio",
  "uuid",

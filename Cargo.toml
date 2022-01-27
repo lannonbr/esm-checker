@@ -17,3 +17,4 @@ clap = { version = "3.0.7", features = ["derive"] }
 tokio = { version = "1.15.0", features = ["full"] }
 uuid = { version = "0.8.2", features = ["v4"] }
 dotenv = "0.15.0"
+semver = "1.0.4"
