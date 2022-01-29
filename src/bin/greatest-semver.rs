@@ -4,6 +4,8 @@ use futures::{stream::FuturesOrdered, StreamExt};
 use semver::Version;
 use serde_json::Value;
 
+/// The following is a one-off CLI script that adds a "greatest_semver" attribute to every package in the ESM-Checker Package table.
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
