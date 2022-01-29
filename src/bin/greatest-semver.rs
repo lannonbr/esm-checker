@@ -52,18 +52,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let registry_json: Value = serde_json::from_str(&registry_txt).unwrap();
 
-            let greatest_stable_semver = find_semver(&registry_json);
+            let greatest_stable_semver = find_semver(&registry_json, &pkg_name);
 
-            dbg!(&pkg_name, &greatest_stable_semver);
-
-            let resp = dynamo_client
+            dynamo_client
                 .update_item()
                 .table_name(&package_table_name)
-                .key("package_name", AttributeValue::S(pkg_name))
+                .key("package_name", AttributeValue::S(pkg_name.clone()))
                 .update_expression("SET greatest_semver = :gs")
                 .expression_attribute_values(":gs", AttributeValue::S(greatest_stable_semver))
                 .send()
-                .await;
+                .await
+                .expect("Should have successfully updated item");
         }
     }
 
@@ -71,27 +70,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let registry_txt = resp.unwrap();
 
         let registry_json: Value = serde_json::from_str(&registry_txt).unwrap();
-        let pkg_name = registry_json["name"].to_string();
+        let pkg_name = registry_json["name"].as_str().unwrap().to_owned();
 
-        let greatest_stable_semver = find_semver(&registry_json);
+        let greatest_stable_semver = find_semver(&registry_json, &pkg_name);
 
-        dbg!(&pkg_name, &greatest_stable_semver);
-
-        let resp = dynamo_client
+        dynamo_client
             .update_item()
             .table_name(&package_table_name)
-            .key("package_name", AttributeValue::S(pkg_name))
+            .key("package_name", AttributeValue::S(pkg_name.clone()))
             .update_expression("SET greatest_semver = :gs")
             .expression_attribute_values(":gs", AttributeValue::S(greatest_stable_semver))
             .send()
-            .await;
+            .await
+            .expect("Should have successfully updated item");
     }
 
     Ok(())
 }
 
-fn find_semver(val: &Value) -> String {
-    let versions = val["versions"].as_object().unwrap();
+fn find_semver(val: &Value, pkg_name: &String) -> String {
+    let versions = match val["versions"].as_object() {
+        Some(s) => s,
+        None => {
+            println!("{}: {}", pkg_name, val.to_string());
+            panic!("Failed to find `versions` field within JSON for package");
+        }
+    };
 
     versions
         .keys()
@@ -100,7 +104,7 @@ fn find_semver(val: &Value) -> String {
 
             version.pre.is_empty()
         })
-        .max()
+        .max_by(|a, b| Version::parse(a).unwrap().cmp(&Version::parse(b).unwrap()))
         .unwrap()
         .to_owned()
 }
