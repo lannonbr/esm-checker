@@ -46,20 +46,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let name = pkg_name.clone();
         requests.push(tokio::spawn(async move {
             let url = format!("https://registry.npmjs.com/{}", &name);
-            client.get(url).send().await.unwrap().text().await.unwrap()
+            (
+                name,
+                client.get(url).send().await.unwrap().text().await.unwrap(),
+            )
         }));
 
         if requests.len() > 20 {
-            let registry_txt = requests.next().await.unwrap().unwrap();
+            let (name, registry_txt) = requests.next().await.unwrap().unwrap();
 
             let registry_json: Value = serde_json::from_str(&registry_txt).unwrap();
 
-            let greatest_stable_semver = find_semver(&registry_json, &pkg_name);
+            let greatest_stable_semver = find_semver(&registry_json, &name);
 
             dynamo_client
                 .update_item()
                 .table_name(&package_table_name)
-                .key("package_name", AttributeValue::S(pkg_name.clone()))
+                .key("package_name", AttributeValue::S(name))
                 .update_expression("SET greatest_semver = :gs")
                 .expression_attribute_values(":gs", AttributeValue::S(greatest_stable_semver))
                 .send()
@@ -69,17 +72,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     while let Some(resp) = requests.next().await {
-        let registry_txt = resp.unwrap();
+        let (name, registry_txt) = resp.unwrap();
 
         let registry_json: Value = serde_json::from_str(&registry_txt).unwrap();
-        let pkg_name = registry_json["name"].as_str().unwrap().to_owned();
 
-        let greatest_stable_semver = find_semver(&registry_json, &pkg_name);
+        let greatest_stable_semver = find_semver(&registry_json, &name);
 
         dynamo_client
             .update_item()
             .table_name(&package_table_name)
-            .key("package_name", AttributeValue::S(pkg_name.clone()))
+            .key("package_name", AttributeValue::S(name))
             .update_expression("SET greatest_semver = :gs")
             .expression_attribute_values(":gs", AttributeValue::S(greatest_stable_semver))
             .send()
