@@ -1,6 +1,6 @@
 # ESM Checker
 
-A Rust tool to check what popular node projects are using [ESM](https://nodejs.org/api/esm.html) for package their code.
+A toolset to check what popular node projects are using [ESM](https://nodejs.org/api/esm.html) for package their code.
 
 ## Requisites
 
