@@ -5,6 +5,7 @@ const {
 } = require("aws-cdk-github-oidc");
 const dynamo = require("@aws-cdk/aws-dynamodb");
 const { CfnOutput } = require("@aws-cdk/core");
+const iam = require("@aws-cdk/aws-iam");
 
 class CdkStack extends cdk.Stack {
   /**
@@ -102,6 +103,27 @@ class CdkStack extends cdk.Stack {
 
     statsTable.grantReadData(siteReadRole);
     auditTable.grantReadData(siteReadRole);
+
+    const netlifyUser = new iam.User(this, "ESMCheckerNetlifyUser", {
+      userName: "esm-checker-netlify",
+    });
+
+    packageTable.grantReadData(netlifyUser);
+
+    const netlifyAccessKey = new iam.CfnAccessKey(
+      this,
+      "ESMCheckerNetlifyAccessKey",
+      {
+        userName: netlifyUser.userName,
+      }
+    );
+
+    new CfnOutput(this, "ESMCheckerNetlifyToken", {
+      value: netlifyAccessKey.ref,
+    });
+    new CfnOutput(this, "ESMCheckerNetlifySecret", {
+      value: netlifyAccessKey.attrSecretAccessKey,
+    });
 
     const tableName = new CfnOutput(this, "ESMCheckerDynamoStatsTableName", {
       value: statsTable.tableName,
