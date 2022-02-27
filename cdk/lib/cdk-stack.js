@@ -109,6 +109,7 @@ class CdkStack extends cdk.Stack {
     });
 
     packageTable.grantReadData(netlifyUser);
+    auditTable.grantReadData(netlifyUser);
 
     const netlifyAccessKey = new iam.CfnAccessKey(
       this,
