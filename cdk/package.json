@@ -8,13 +8,13 @@
     "cdk": "cdk"
   },
   "devDependencies": {
-    "@aws-cdk/assertions": "1.137.0",
-    "aws-cdk": "1.137.0"
+    "@aws-cdk/assertions": "1.148.0",
+    "aws-cdk": "1.148.0"
   },
   "dependencies": {
-    "@aws-cdk/aws-dynamodb": "^1.137.0",
-    "@aws-cdk/aws-iam": "^1.144.0",
-    "@aws-cdk/core": "1.137.0",
+    "@aws-cdk/aws-dynamodb": "^1.148.0",
+    "@aws-cdk/aws-iam": "^1.148.0",
+    "@aws-cdk/core": "1.148.0",
     "aws-cdk-github-oidc": "^0.0.21"
   }
 }
